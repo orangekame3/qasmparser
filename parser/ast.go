@@ -76,8 +76,8 @@ func (c *Comment) String() string {
 // QuantumDeclaration represents qubit declarations
 type QuantumDeclaration struct {
 	BaseNode
-	Type       string     `json:"type"`                // "qubit"
-	Size       Expression `json:"size,omitempty"`      // for qubit[n]
+	Type       string     `json:"type"`           // "qubit"
+	Size       Expression `json:"size,omitempty"` // for qubit[n]
 	Identifier string     `json:"identifier"`
 }
 
@@ -89,8 +89,8 @@ func (q *QuantumDeclaration) String() string {
 // ClassicalDeclaration represents classical variable declarations
 type ClassicalDeclaration struct {
 	BaseNode
-	Type        string     `json:"type"`                    // "bit", "int", "float", etc.
-	Size        Expression `json:"size,omitempty"`          // for bit[n], int[32], etc.
+	Type        string     `json:"type"`           // "bit", "int", "float", etc.
+	Size        Expression `json:"size,omitempty"` // for bit[n], int[32], etc.
 	Identifier  string     `json:"identifier"`
 	Initializer Expression `json:"initializer,omitempty"`
 }
@@ -117,8 +117,8 @@ func (g *GateCall) String() string {
 // Modifier represents gate modifiers like inv, ctrl, etc.
 type Modifier struct {
 	BaseNode
-	Type       string       `json:"type"`                    // "inv", "ctrl", "pow"
-	Parameters []Expression `json:"parameters,omitempty"`   // for parameterized modifiers
+	Type       string       `json:"type"`                 // "inv", "ctrl", "pow"
+	Parameters []Expression `json:"parameters,omitempty"` // for parameterized modifiers
 }
 
 func (m *Modifier) String() string {
@@ -189,9 +189,9 @@ func (i *IfStatement) String() string {
 // ForStatement represents for loops
 type ForStatement struct {
 	BaseNode
-	Variable   string      `json:"variable"`
-	Iterable   Expression  `json:"iterable"`
-	Body       []Statement `json:"body"`
+	Variable string      `json:"variable"`
+	Iterable Expression  `json:"iterable"`
+	Body     []Statement `json:"body"`
 }
 
 func (f *ForStatement) StatementNode() {}
@@ -239,9 +239,9 @@ func (i *IndexedIdentifier) String() string {
 // RangedIdentifier represents range access like q[0:2]
 type RangedIdentifier struct {
 	BaseNode
-	Name  string     `json:"name"`
-	Start Expression `json:"start"`
-	End   Expression `json:"end"`
+	Name     string     `json:"name"`
+	Start    Expression `json:"start"`
+	EndIndex Expression `json:"end"`
 }
 
 func (r *RangedIdentifier) ExpressionNode() {}

@@ -20,12 +20,7 @@ tasks:
           echo "Installing ANTLR4..."
           if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS
-            if command -v brew &> /dev/null; then
-              brew install antlr
-            else
-              echo "Please install Homebrew first: https://brew.sh"
-              exit 1
-            fi
+            brew install antlr
           elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
             # Linux
             if command -v apt-get &> /dev/null; then
@@ -47,13 +42,9 @@ tasks:
 
   generate:
     desc: Generate ANTLR parser code
-    sources:
-      - grammar/*.g4
-    generates:
-      - gen/parser/*.go
     cmds:
       - mkdir -p gen/parser
-      - antlr -Dlanguage=Go -package parser -visitor -o gen/parser grammar/*.g4
+      - antlr4 -Dlanguage=Go -visitor -o gen/parser -package qasm_gen grammar/qasm3Lexer.g4 grammar/qasm3Parser.g4
       - echo "Generated ANTLR parser files in gen/parser/"
 
   build:
@@ -62,12 +53,6 @@ tasks:
     cmds:
       - go build ./...
 
-  build-cli:
-    desc: Build CLI tool
-    deps: [generate]
-    cmds:
-      - go build -o bin/qasmparser ./cmd/qasmparser
-      - 'echo "CLI tool built: bin/qasmparser"'
 
   test:
     desc: Run tests

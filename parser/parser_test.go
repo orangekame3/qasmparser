@@ -22,7 +22,7 @@ func TestNewParserWithOptions(t *testing.T) {
 		ErrorRecovery:   false,
 		MaxErrors:       5,
 	}
-	
+
 	parser := NewParserWithOptions(opts)
 	if parser == nil {
 		t.Fatal("NewParserWithOptions returned nil")
@@ -37,7 +37,7 @@ func TestDefaultParseOptions(t *testing.T) {
 	if opts == nil {
 		t.Fatal("DefaultParseOptions returned nil")
 	}
-	
+
 	if opts.StrictMode != false {
 		t.Error("Expected StrictMode to be false")
 	}
@@ -54,7 +54,7 @@ func TestDefaultParseOptions(t *testing.T) {
 
 func TestPreprocessContent(t *testing.T) {
 	parser := NewParser()
-	
+
 	tests := []struct {
 		name     string
 		input    string
@@ -81,7 +81,7 @@ func TestPreprocessContent(t *testing.T) {
 			expected: "line1\nline2\n",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parser.preprocessContent(tt.input)
@@ -99,12 +99,12 @@ func TestParseError(t *testing.T) {
 		Type:     "syntax",
 		Context:  "gate declaration",
 	}
-	
+
 	expected := "syntax error at line 1, column 5: unexpected token (context: gate declaration)"
 	if err.Error() != expected {
 		t.Errorf("Expected %q, got %q", expected, err.Error())
 	}
-	
+
 	// Test without context
 	err.Context = ""
 	expected = "syntax error at line 1, column 5: unexpected token"
@@ -121,21 +121,21 @@ func TestParseResult(t *testing.T) {
 			{Message: "error 2", Type: "semantic", Position: Position{Line: 2, Column: 1}},
 		},
 	}
-	
+
 	if !result.HasErrors() {
 		t.Error("Expected HasErrors to return true")
 	}
-	
+
 	messages := result.ErrorMessages()
 	if len(messages) != 2 {
 		t.Errorf("Expected 2 error messages, got %d", len(messages))
 	}
-	
+
 	str := result.String()
 	if !strings.Contains(str, "error 1") || !strings.Contains(str, "error 2") {
 		t.Error("Expected string to contain both error messages")
 	}
-	
+
 	// Test empty result
 	emptyResult := &ParseResult{}
 	if emptyResult.HasErrors() {
@@ -151,23 +151,23 @@ func TestErrorListener(t *testing.T) {
 	if listener == nil {
 		t.Fatal("NewErrorListener returned nil")
 	}
-	
+
 	if listener.HasErrors() {
 		t.Error("New listener should have no errors")
 	}
-	
+
 	// Simulate syntax error
 	listener.SyntaxError(nil, nil, 1, 5, "unexpected token", nil)
-	
+
 	if !listener.HasErrors() {
 		t.Error("Expected listener to have errors after SyntaxError call")
 	}
-	
+
 	errors := listener.GetErrors()
 	if len(errors) != 1 {
 		t.Errorf("Expected 1 error, got %d", len(errors))
 	}
-	
+
 	if errors[0].Type != "syntax" {
 		t.Errorf("Expected error type 'syntax', got %q", errors[0].Type)
 	}
@@ -185,7 +185,7 @@ func TestASTNodes(t *testing.T) {
 	if pos.Line != 1 || pos.Column != 5 || pos.Offset != 10 {
 		t.Error("Position fields not set correctly")
 	}
-	
+
 	// Test BaseNode
 	base := BaseNode{
 		Position: Position{Line: 1, Column: 1},
@@ -197,7 +197,7 @@ func TestASTNodes(t *testing.T) {
 	if base.End().Column != 10 {
 		t.Error("BaseNode End() not working correctly")
 	}
-	
+
 	// Test Program
 	program := &Program{
 		BaseNode:   base,
@@ -207,7 +207,7 @@ func TestASTNodes(t *testing.T) {
 	if program.String() != "Program" {
 		t.Error("Program String() not working correctly")
 	}
-	
+
 	// Test Version
 	version := &Version{
 		BaseNode: base,
@@ -216,7 +216,7 @@ func TestASTNodes(t *testing.T) {
 	if version.String() != "Version: 3.0" {
 		t.Error("Version String() not working correctly")
 	}
-	
+
 	// Test QuantumDeclaration
 	qDecl := &QuantumDeclaration{
 		BaseNode:   base,
@@ -226,11 +226,11 @@ func TestASTNodes(t *testing.T) {
 	if qDecl.String() != "QuantumDeclaration: q" {
 		t.Error("QuantumDeclaration String() not working correctly")
 	}
-	
+
 	// Test interface compliance
 	var stmt Statement = qDecl
 	stmt.StatementNode() // Should not panic
-	
+
 	var node Node = qDecl
 	if node.Pos().Line != 1 {
 		t.Error("QuantumDeclaration doesn't implement Node correctly")
@@ -240,23 +240,23 @@ func TestASTNodes(t *testing.T) {
 func TestVisitorPattern(t *testing.T) {
 	// Test BaseVisitor
 	visitor := &BaseVisitor{}
-	
+
 	program := &Program{
 		BaseNode:   BaseNode{Position: Position{Line: 1, Column: 1}},
 		Statements: make([]Statement, 0),
 	}
-	
+
 	result := visitor.VisitProgram(program)
 	if result != nil {
 		t.Error("BaseVisitor should return nil")
 	}
-	
+
 	// Test Walk function
 	result = Walk(visitor, program)
 	if result != nil {
 		t.Error("Walk should return nil for BaseVisitor")
 	}
-	
+
 	// Test Walk with nil node
 	result = Walk(visitor, nil)
 	if result != nil {
@@ -282,32 +282,32 @@ func (m *mockVisitor) VisitQuantumDeclaration(node *QuantumDeclaration) interfac
 
 func TestMockVisitor(t *testing.T) {
 	visitor := &mockVisitor{visitedNodes: make([]string, 0)}
-	
+
 	program := &Program{
 		BaseNode:   BaseNode{Position: Position{Line: 1, Column: 1}},
 		Statements: make([]Statement, 0),
 	}
-	
+
 	result := Walk(visitor, program)
 	if result != "visited program" {
 		t.Errorf("Expected 'visited program', got %v", result)
 	}
-	
+
 	if len(visitor.visitedNodes) != 1 || visitor.visitedNodes[0] != "Program" {
 		t.Error("Visitor didn't visit Program node correctly")
 	}
-	
+
 	qDecl := &QuantumDeclaration{
 		BaseNode:   BaseNode{Position: Position{Line: 1, Column: 1}},
 		Type:       "qubit",
 		Identifier: "q",
 	}
-	
+
 	result = Walk(visitor, qDecl)
 	if result != "visited quantum declaration" {
 		t.Errorf("Expected 'visited quantum declaration', got %v", result)
 	}
-	
+
 	if len(visitor.visitedNodes) != 2 || visitor.visitedNodes[1] != "QuantumDeclaration" {
 		t.Error("Visitor didn't visit QuantumDeclaration node correctly")
 	}

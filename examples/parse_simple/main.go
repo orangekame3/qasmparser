@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/orangekame3/qasmparser/parser"
 )
@@ -26,11 +25,11 @@ measure q -> c;
 
 	// Parse the QASM code
 	fmt.Println("Parsing OpenQASM 3.0 program...")
-	
+
 	// Note: This will panic until ANTLR files are generated
 	// Run 'task generate' first to create the ANTLR parser files
 	result := p.ParseWithErrors(qasm)
-	
+
 	if result.HasErrors() {
 		fmt.Printf("Found %d errors:\n", len(result.Errors))
 		for _, err := range result.Errors {

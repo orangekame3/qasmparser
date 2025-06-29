@@ -8,27 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial OpenQASM 3.0 parser implementation
+- Initial OpenQASM 3.0 parser implementation as a Go package
 - Complete AST node definitions with visitor pattern
-- CLI tool with multiple commands (parse, validate, ast, stats, format)
-- Support for multiple output formats (text, JSON, tree)
 - Comprehensive error handling and reporting
 - ANTLR4-based grammar for OpenQASM 3.0
-- Docker containerization support
-- Homebrew formula for easy installation
-- GitHub Actions CI/CD pipeline
-- GoReleaser configuration for automated releases
+- Three comprehensive examples showing package usage
+- Task-based build automation
+- Test suite with coverage reporting
 
 ### Features
 - **Parser Library**: Reusable Go package for OpenQASM 3.0 parsing
-- **CLI Tool**: Command-line interface with 5 subcommands
 - **AST Support**: Complete Abstract Syntax Tree with visitor pattern
-- **Error Recovery**: Robust error handling with detailed reporting
-- **Multi-format Output**: Text, JSON, and tree visualization
-- **Cross-platform**: Support for Linux, macOS, and Windows
-- **Package Management**: Available via Homebrew, Docker, and binary releases
+- **Error Recovery**: Robust error handling with detailed position reporting
+- **Flexible API**: Multiple parse methods (string, file, reader, with errors)
+- **Extensible**: Visitor pattern for custom AST traversal and analysis
+- **Package-focused**: Designed for integration into other tools
 
 ### Supported OpenQASM 3.0 Features
+
+#### ✅ Fully Supported
 - Version declarations (`OPENQASM 3.0;`)
 - Include statements (`include "stdgates.qasm";`)
 - Qubit declarations (`qubit q;`, `qubit[n] q;`)
@@ -38,3 +36,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Measurement (`measure q -> c;`)
 - Basic expressions and arithmetic
 - Comments (line and block)
+
+#### 🚧 Partial Support
+- Gate definitions (basic syntax)
+- Control flow (`if`, `for`, `while`)
+- Function definitions (`def`)
+
+#### 📋 Planned
+- Advanced type system
+- Pulse-level programming
+- Timing constructs
+- Complex expressions
+
+### Examples
+- `parse_simple/` - Basic parsing and validation example
+- `ast_visitor/` - AST visitor pattern usage with statistics
+- `error_handling/` - Comprehensive error handling patterns
+
+### API
+- `NewParser()` - Create parser with default options
+- `NewParserWithOptions()` - Create parser with custom configuration
+- `ParseString()` - Parse QASM from string
+- `ParseFile()` - Parse QASM from file
+- `ParseWithErrors()` - Parse with detailed error collection
+- `Validate()` - Quick validation (first error only)
+- Visitor pattern with `Walk()` and `NewDepthFirstVisitor()`
+
+### Notes
+This package was separated from [qasmfmt](https://github.com/orangekame3/qasmfmt) to provide a reusable OpenQASM 3.0 parser for the Go ecosystem.

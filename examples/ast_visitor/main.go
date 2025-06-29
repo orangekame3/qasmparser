@@ -23,18 +23,18 @@ func (v *PrintVisitor) print(msg string) {
 func (v *PrintVisitor) VisitProgram(node *parser.Program) interface{} {
 	v.print("Program:")
 	v.indent++
-	
+
 	if node.Version != nil {
 		parser.Walk(v, node.Version)
 	}
-	
+
 	v.print(fmt.Sprintf("Statements: %d", len(node.Statements)))
 	v.indent++
 	for _, stmt := range node.Statements {
 		parser.Walk(v, stmt)
 	}
 	v.indent--
-	
+
 	if len(node.Comments) > 0 {
 		v.print(fmt.Sprintf("Comments: %d", len(node.Comments)))
 		v.indent++
@@ -43,7 +43,7 @@ func (v *PrintVisitor) VisitProgram(node *parser.Program) interface{} {
 		}
 		v.indent--
 	}
-	
+
 	v.indent--
 	return nil
 }
@@ -89,7 +89,7 @@ func (v *PrintVisitor) VisitClassicalDeclaration(node *parser.ClassicalDeclarati
 
 func (v *PrintVisitor) VisitGateCall(node *parser.GateCall) interface{} {
 	v.print(fmt.Sprintf("Gate Call: %s", node.Name))
-	
+
 	if len(node.Parameters) > 0 {
 		v.indent++
 		v.print("Parameters:")
@@ -100,7 +100,7 @@ func (v *PrintVisitor) VisitGateCall(node *parser.GateCall) interface{} {
 		v.indent--
 		v.indent--
 	}
-	
+
 	if len(node.Qubits) > 0 {
 		v.indent++
 		v.print("Qubits:")
@@ -111,7 +111,7 @@ func (v *PrintVisitor) VisitGateCall(node *parser.GateCall) interface{} {
 		v.indent--
 		v.indent--
 	}
-	
+
 	if len(node.Modifiers) > 0 {
 		v.indent++
 		v.print("Modifiers:")
@@ -122,7 +122,7 @@ func (v *PrintVisitor) VisitGateCall(node *parser.GateCall) interface{} {
 		v.indent--
 		v.indent--
 	}
-	
+
 	return nil
 }
 
@@ -133,7 +133,7 @@ func (v *PrintVisitor) VisitMeasurement(node *parser.Measurement) interface{} {
 	v.indent++
 	parser.Walk(v, node.Qubit)
 	v.indent--
-	
+
 	if node.Target != nil {
 		v.print("Target:")
 		v.indent++
@@ -203,10 +203,10 @@ func (v *PrintVisitor) VisitComment(node *parser.Comment) interface{} {
 // StatCountVisitor counts different types of statements
 type StatCountVisitor struct {
 	parser.BaseVisitor
-	GateCallCount      int
-	DeclarationCount   int
-	MeasurementCount   int
-	IncludeCount       int
+	GateCallCount    int
+	DeclarationCount int
+	MeasurementCount int
+	IncludeCount     int
 }
 
 func (s *StatCountVisitor) VisitGateCall(node *parser.GateCall) interface{} {
@@ -337,11 +337,11 @@ func main() {
 	// Example 2: Counting statements with StatCountVisitor
 	fmt.Println("2. Statement statistics:")
 	statVisitor := &StatCountVisitor{}
-	
+
 	// Use depth-first visitor to automatically traverse children
 	depthFirst := parser.NewDepthFirstVisitor(statVisitor)
 	parser.Walk(depthFirst, program)
-	
+
 	fmt.Printf("Gate calls: %d\n", statVisitor.GateCallCount)
 	fmt.Printf("Declarations: %d\n", statVisitor.DeclarationCount)
 	fmt.Printf("Measurements: %d\n", statVisitor.MeasurementCount)

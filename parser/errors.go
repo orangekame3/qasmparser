@@ -3,13 +3,15 @@ package parser
 import (
 	"fmt"
 	"strings"
+
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // ParseError represents parsing errors
 type ParseError struct {
 	Message  string   `json:"message"`
 	Position Position `json:"position"`
-	Type     string   `json:"type"`    // "syntax", "semantic", "lexer"
+	Type     string   `json:"type"` // "syntax", "semantic", "lexer"
 	Context  string   `json:"context,omitempty"`
 }
 
@@ -73,7 +75,7 @@ func (l *ErrorListener) HasErrors() bool {
 }
 
 // SyntaxError implements antlr.ErrorListener interface
-func (l *ErrorListener) SyntaxError(recognizer interface{}, offendingSymbol interface{}, line, column int, msg string, e interface{}) {
+func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
 	l.errors = append(l.errors, ParseError{
 		Message:  msg,
 		Position: Position{Line: line, Column: column},
@@ -82,17 +84,17 @@ func (l *ErrorListener) SyntaxError(recognizer interface{}, offendingSymbol inte
 }
 
 // ReportAmbiguity implements antlr.ErrorListener interface
-func (l *ErrorListener) ReportAmbiguity(recognizer interface{}, dfa interface{}, startIndex, stopIndex int, exact bool, ambigAlts interface{}, configs interface{}) {
+func (l *ErrorListener) ReportAmbiguity(recognizer antlr.Parser, dfa *antlr.DFA, startIndex, stopIndex int, exact bool, ambigAlts *antlr.BitSet, configs *antlr.ATNConfigSet) {
 	// Optional: Handle ambiguity errors if needed
 }
 
 // ReportAttemptingFullContext implements antlr.ErrorListener interface
-func (l *ErrorListener) ReportAttemptingFullContext(recognizer interface{}, dfa interface{}, startIndex, stopIndex int, conflictingAlts interface{}, configs interface{}) {
+func (l *ErrorListener) ReportAttemptingFullContext(recognizer antlr.Parser, dfa *antlr.DFA, startIndex, stopIndex int, conflictingAlts *antlr.BitSet, configs *antlr.ATNConfigSet) {
 	// Optional: Handle full context attempts if needed
 }
 
 // ReportContextSensitivity implements antlr.ErrorListener interface
-func (l *ErrorListener) ReportContextSensitivity(recognizer interface{}, dfa interface{}, startIndex, stopIndex int, prediction int, configs interface{}) {
+func (l *ErrorListener) ReportContextSensitivity(recognizer antlr.Parser, dfa *antlr.DFA, startIndex, stopIndex int, prediction int, configs *antlr.ATNConfigSet) {
 	// Optional: Handle context sensitivity if needed
 }
 

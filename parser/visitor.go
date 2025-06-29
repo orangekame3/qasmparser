@@ -38,31 +38,33 @@ type Visitor interface {
 // BaseVisitor provides default implementations that return nil
 type BaseVisitor struct{}
 
-func (v *BaseVisitor) VisitProgram(node *Program) interface{}                                 { return nil }
-func (v *BaseVisitor) VisitVersion(node *Version) interface{}                                 { return nil }
-func (v *BaseVisitor) VisitComment(node *Comment) interface{}                                 { return nil }
-func (v *BaseVisitor) VisitQuantumDeclaration(node *QuantumDeclaration) interface{}           { return nil }
-func (v *BaseVisitor) VisitClassicalDeclaration(node *ClassicalDeclaration) interface{}       { return nil }
-func (v *BaseVisitor) VisitGateCall(node *GateCall) interface{}                               { return nil }
-func (v *BaseVisitor) VisitMeasurement(node *Measurement) interface{}                         { return nil }
-func (v *BaseVisitor) VisitInclude(node *Include) interface{}                                 { return nil }
-func (v *BaseVisitor) VisitGateDefinition(node *GateDefinition) interface{}                   { return nil }
-func (v *BaseVisitor) VisitIfStatement(node *IfStatement) interface{}                         { return nil }
-func (v *BaseVisitor) VisitForStatement(node *ForStatement) interface{}                       { return nil }
-func (v *BaseVisitor) VisitWhileStatement(node *WhileStatement) interface{}                   { return nil }
-func (v *BaseVisitor) VisitIdentifier(node *Identifier) interface{}                           { return nil }
-func (v *BaseVisitor) VisitIndexedIdentifier(node *IndexedIdentifier) interface{}             { return nil }
-func (v *BaseVisitor) VisitRangedIdentifier(node *RangedIdentifier) interface{}               { return nil }
-func (v *BaseVisitor) VisitIntegerLiteral(node *IntegerLiteral) interface{}                   { return nil }
-func (v *BaseVisitor) VisitFloatLiteral(node *FloatLiteral) interface{}                       { return nil }
-func (v *BaseVisitor) VisitStringLiteral(node *StringLiteral) interface{}                     { return nil }
-func (v *BaseVisitor) VisitBooleanLiteral(node *BooleanLiteral) interface{}                   { return nil }
-func (v *BaseVisitor) VisitBinaryExpression(node *BinaryExpression) interface{}               { return nil }
-func (v *BaseVisitor) VisitUnaryExpression(node *UnaryExpression) interface{}                 { return nil }
-func (v *BaseVisitor) VisitFunctionCall(node *FunctionCall) interface{}                       { return nil }
-func (v *BaseVisitor) VisitParenthesizedExpression(node *ParenthesizedExpression) interface{} { return nil }
-func (v *BaseVisitor) VisitModifier(node *Modifier) interface{}                               { return nil }
-func (v *BaseVisitor) VisitParameter(node *Parameter) interface{}                             { return nil }
+func (v *BaseVisitor) VisitProgram(node *Program) interface{}                           { return nil }
+func (v *BaseVisitor) VisitVersion(node *Version) interface{}                           { return nil }
+func (v *BaseVisitor) VisitComment(node *Comment) interface{}                           { return nil }
+func (v *BaseVisitor) VisitQuantumDeclaration(node *QuantumDeclaration) interface{}     { return nil }
+func (v *BaseVisitor) VisitClassicalDeclaration(node *ClassicalDeclaration) interface{} { return nil }
+func (v *BaseVisitor) VisitGateCall(node *GateCall) interface{}                         { return nil }
+func (v *BaseVisitor) VisitMeasurement(node *Measurement) interface{}                   { return nil }
+func (v *BaseVisitor) VisitInclude(node *Include) interface{}                           { return nil }
+func (v *BaseVisitor) VisitGateDefinition(node *GateDefinition) interface{}             { return nil }
+func (v *BaseVisitor) VisitIfStatement(node *IfStatement) interface{}                   { return nil }
+func (v *BaseVisitor) VisitForStatement(node *ForStatement) interface{}                 { return nil }
+func (v *BaseVisitor) VisitWhileStatement(node *WhileStatement) interface{}             { return nil }
+func (v *BaseVisitor) VisitIdentifier(node *Identifier) interface{}                     { return nil }
+func (v *BaseVisitor) VisitIndexedIdentifier(node *IndexedIdentifier) interface{}       { return nil }
+func (v *BaseVisitor) VisitRangedIdentifier(node *RangedIdentifier) interface{}         { return nil }
+func (v *BaseVisitor) VisitIntegerLiteral(node *IntegerLiteral) interface{}             { return nil }
+func (v *BaseVisitor) VisitFloatLiteral(node *FloatLiteral) interface{}                 { return nil }
+func (v *BaseVisitor) VisitStringLiteral(node *StringLiteral) interface{}               { return nil }
+func (v *BaseVisitor) VisitBooleanLiteral(node *BooleanLiteral) interface{}             { return nil }
+func (v *BaseVisitor) VisitBinaryExpression(node *BinaryExpression) interface{}         { return nil }
+func (v *BaseVisitor) VisitUnaryExpression(node *UnaryExpression) interface{}           { return nil }
+func (v *BaseVisitor) VisitFunctionCall(node *FunctionCall) interface{}                 { return nil }
+func (v *BaseVisitor) VisitParenthesizedExpression(node *ParenthesizedExpression) interface{} {
+	return nil
+}
+func (v *BaseVisitor) VisitModifier(node *Modifier) interface{}   { return nil }
+func (v *BaseVisitor) VisitParameter(node *Parameter) interface{} { return nil }
 
 // Walk traverses AST with visitor using dispatch pattern
 func Walk(visitor Visitor, node Node) interface{} {
@@ -230,7 +232,7 @@ func (d *DepthFirstVisitor) VisitIndexedIdentifier(node *IndexedIdentifier) inte
 func (d *DepthFirstVisitor) VisitRangedIdentifier(node *RangedIdentifier) interface{} {
 	result := d.visitor.VisitRangedIdentifier(node)
 	Walk(d, node.Start)
-	Walk(d, node.End)
+	Walk(d, node.EndIndex)
 	return result
 }
 
@@ -266,14 +268,36 @@ func (d *DepthFirstVisitor) VisitModifier(node *Modifier) interface{} {
 }
 
 // Delegate other methods to wrapped visitor
-func (d *DepthFirstVisitor) VisitVersion(node *Version) interface{}                   { return d.visitor.VisitVersion(node) }
-func (d *DepthFirstVisitor) VisitComment(node *Comment) interface{}                   { return d.visitor.VisitComment(node) }
-func (d *DepthFirstVisitor) VisitQuantumDeclaration(node *QuantumDeclaration) interface{} { return d.visitor.VisitQuantumDeclaration(node) }
-func (d *DepthFirstVisitor) VisitClassicalDeclaration(node *ClassicalDeclaration) interface{} { return d.visitor.VisitClassicalDeclaration(node) }
-func (d *DepthFirstVisitor) VisitInclude(node *Include) interface{}                   { return d.visitor.VisitInclude(node) }
-func (d *DepthFirstVisitor) VisitIdentifier(node *Identifier) interface{}             { return d.visitor.VisitIdentifier(node) }
-func (d *DepthFirstVisitor) VisitIntegerLiteral(node *IntegerLiteral) interface{}     { return d.visitor.VisitIntegerLiteral(node) }
-func (d *DepthFirstVisitor) VisitFloatLiteral(node *FloatLiteral) interface{}         { return d.visitor.VisitFloatLiteral(node) }
-func (d *DepthFirstVisitor) VisitStringLiteral(node *StringLiteral) interface{}       { return d.visitor.VisitStringLiteral(node) }
-func (d *DepthFirstVisitor) VisitBooleanLiteral(node *BooleanLiteral) interface{}     { return d.visitor.VisitBooleanLiteral(node) }
-func (d *DepthFirstVisitor) VisitParameter(node *Parameter) interface{}               { return d.visitor.VisitParameter(node) }
+func (d *DepthFirstVisitor) VisitVersion(node *Version) interface{} {
+	return d.visitor.VisitVersion(node)
+}
+func (d *DepthFirstVisitor) VisitComment(node *Comment) interface{} {
+	return d.visitor.VisitComment(node)
+}
+func (d *DepthFirstVisitor) VisitQuantumDeclaration(node *QuantumDeclaration) interface{} {
+	return d.visitor.VisitQuantumDeclaration(node)
+}
+func (d *DepthFirstVisitor) VisitClassicalDeclaration(node *ClassicalDeclaration) interface{} {
+	return d.visitor.VisitClassicalDeclaration(node)
+}
+func (d *DepthFirstVisitor) VisitInclude(node *Include) interface{} {
+	return d.visitor.VisitInclude(node)
+}
+func (d *DepthFirstVisitor) VisitIdentifier(node *Identifier) interface{} {
+	return d.visitor.VisitIdentifier(node)
+}
+func (d *DepthFirstVisitor) VisitIntegerLiteral(node *IntegerLiteral) interface{} {
+	return d.visitor.VisitIntegerLiteral(node)
+}
+func (d *DepthFirstVisitor) VisitFloatLiteral(node *FloatLiteral) interface{} {
+	return d.visitor.VisitFloatLiteral(node)
+}
+func (d *DepthFirstVisitor) VisitStringLiteral(node *StringLiteral) interface{} {
+	return d.visitor.VisitStringLiteral(node)
+}
+func (d *DepthFirstVisitor) VisitBooleanLiteral(node *BooleanLiteral) interface{} {
+	return d.visitor.VisitBooleanLiteral(node)
+}
+func (d *DepthFirstVisitor) VisitParameter(node *Parameter) interface{} {
+	return d.visitor.VisitParameter(node)
+}

@@ -46,7 +46,7 @@ gate my_gate(theta) q {
 	// Create parser with different configurations
 	fmt.Println("1. Parsing valid QASM:")
 	basicParser := parser.NewParser()
-	
+
 	// Note: This will panic until ANTLR files are generated
 	// Demonstrating the error handling interface
 	result := basicParser.ParseWithErrors(validQasm)
@@ -88,13 +88,13 @@ gate my_gate(theta) q {
 
 	// Example 6: Error types and custom error creation
 	fmt.Println("\n6. Different error types:")
-	
+
 	syntaxErr := parser.NewSyntaxError("unexpected token ';'", parser.Position{Line: 5, Column: 12})
 	fmt.Printf("Syntax Error: %s\n", syntaxErr.Error())
-	
+
 	semanticErr := parser.NewSemanticError("undefined gate 'my_gate'", parser.Position{Line: 8, Column: 1})
 	fmt.Printf("Semantic Error: %s\n", semanticErr.Error())
-	
+
 	lexerErr := parser.NewLexerError("unterminated string literal", parser.Position{Line: 3, Column: 15})
 	fmt.Printf("Lexer Error: %s\n", lexerErr.Error())
 
@@ -107,18 +107,18 @@ gate my_gate(theta) q {
 
 func handleResult(title string, result *parser.ParseResult) {
 	fmt.Printf("=== %s ===\n", title)
-	
+
 	if result.HasErrors() {
 		fmt.Printf("Found %d errors:\n", len(result.Errors))
 		for i, err := range result.Errors {
 			fmt.Printf("  %d. %s\n", i+1, err.Error())
 		}
-		
+
 		// Show error summary by type
 		syntaxCount := 0
 		semanticCount := 0
 		lexerCount := 0
-		
+
 		for _, err := range result.Errors {
 			switch err.Type {
 			case "syntax":
@@ -129,13 +129,13 @@ func handleResult(title string, result *parser.ParseResult) {
 				lexerCount++
 			}
 		}
-		
-		fmt.Printf("Error summary: %d syntax, %d semantic, %d lexer\n", 
+
+		fmt.Printf("Error summary: %d syntax, %d semantic, %d lexer\n",
 			syntaxCount, semanticCount, lexerCount)
 	} else {
 		fmt.Println("✓ No errors found")
 	}
-	
+
 	if result.Program != nil {
 		fmt.Printf("Program parsed with %d statements\n", len(result.Program.Statements))
 		if result.Program.Version != nil {
@@ -155,14 +155,14 @@ qubit q;
 invalid_statement;  // This will cause an error
 h q;
 `
-	
+
 	err := os.WriteFile(tempFile, []byte(content), 0644)
 	if err != nil {
 		fmt.Printf("Failed to create temp file: %s\n", err)
 		return
 	}
 	defer os.Remove(tempFile)
-	
+
 	// Parse file
 	program, err := p.ParseFile(tempFile)
 	if err != nil {
@@ -174,14 +174,14 @@ h q;
 	} else {
 		fmt.Printf("File parsed successfully: %d statements\n", len(program.Statements))
 	}
-	
+
 	// Alternative: use ParseWithErrors for more detailed error information
 	fileContent, err := os.ReadFile(tempFile)
 	if err != nil {
 		fmt.Printf("Failed to read file: %s\n", err)
 		return
 	}
-	
+
 	result := p.ParseWithErrors(string(fileContent))
 	handleResult("File Parsing", result)
 }

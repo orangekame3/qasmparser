@@ -13,36 +13,8 @@ A robust, reusable Go package for parsing OpenQASM 3.0 quantum programs, built o
 
 ## Installation
 
-### As a Go Library
-
 ```bash
 go get github.com/orangekame3/qasmparser
-```
-
-### CLI Tool
-
-#### Homebrew (macOS/Linux)
-
-```bash
-brew install orangekame3/tap/qasmparser
-```
-
-#### Binary Releases
-
-Download pre-built binaries from the [releases page](https://github.com/orangekame3/qasmparser/releases).
-
-#### Docker
-
-```bash
-docker run --rm ghcr.io/orangekame3/qasmparser:latest --version
-```
-
-#### From Source
-
-```bash
-git clone https://github.com/orangekame3/qasmparser.git
-cd qasmparser
-task build-cli
 ```
 
 ## Quick Start
@@ -100,18 +72,21 @@ if result.Program != nil {
 ### AST Visitor Pattern
 
 ```go
-type PrintVisitor struct {
+type GateCountVisitor struct {
     parser.BaseVisitor
+    count int
 }
 
-func (v *PrintVisitor) VisitGateCall(node *parser.GateCall) interface{} {
+func (v *GateCountVisitor) VisitGateCall(node *parser.GateCall) interface{} {
+    v.count++
     fmt.Printf("Gate: %s on %d qubits\n", node.Name, len(node.Qubits))
     return nil
 }
 
 // Usage
-visitor := &PrintVisitor{}
+visitor := &GateCountVisitor{}
 parser.Walk(visitor, program)
+fmt.Printf("Total gates: %d\n", visitor.count)
 ```
 
 ## Project Structure
@@ -123,17 +98,14 @@ qasmparser/
 │   ├── parser.go   # Main parser interface
 │   ├── visitor.go  # Visitor pattern implementation
 │   └── errors.go   # Error handling
-├── cmd/qasmparser/  # CLI tool
-│   └── main.go     # CLI implementation
 ├── gen/parser/      # Generated ANTLR code
 ├── grammar/         # ANTLR grammar files
 ├── testdata/        # Test QASM files
 ├── examples/        # Usage examples
-├── bin/             # Built binaries
 └── Taskfile.yaml    # Build automation
 ```
 
-## Build Setup
+## Development Setup
 
 This package uses [Task](https://taskfile.dev) for build automation and requires ANTLR4 for code generation.
 
@@ -158,7 +130,7 @@ brew install antlr
 task install-antlr
 ```
 
-### Development Setup
+### Development Commands
 
 ```bash
 # Setup development environment
@@ -175,9 +147,6 @@ task test-coverage
 
 # Build the package
 task build
-
-# Build CLI tool
-task build-cli
 
 # Run linters
 task lint
@@ -215,119 +184,96 @@ task examples
 
 ## API Reference
 
-### Parser
+### Parser Creation
 
 ```go
-// Create parser
+// Create parser with default options
 parser := parser.NewParser()
+
+// Create parser with custom options
 parser := parser.NewParserWithOptions(&parser.ParseOptions{
     StrictMode:      true,
     IncludeComments: false,
     ErrorRecovery:   true,
     MaxErrors:       10,
 })
+```
 
-// Parse methods
+### Parse Methods
+
+```go
+// Parse from string
 program, err := parser.ParseString(content)
-program, err := parser.ParseFile(filename)
-program, err := parser.ParseReader(reader)
-program, err := parser.ParseWithContext(ctx, content)
 
-// Error handling
+// Parse from file
+program, err := parser.ParseFile(filename)
+
+// Parse with detailed error information
 result := parser.ParseWithErrors(content)
+
+// Quick validation (returns first error only)
 err := parser.Validate(content)
 ```
 
-### AST Nodes
+### AST Node Types
 
 Key AST node types:
 
-- `Program` - Root node
+- `Program` - Root node containing all statements
 - `Version` - OpenQASM version declaration
-- `QuantumDeclaration` - Qubit declarations
-- `ClassicalDeclaration` - Classical variable declarations
-- `GateCall` - Gate applications
-- `Measurement` - Measure statements
-- `Include` - Include statements
-- `Expression` types for all expressions
+- `QuantumDeclaration` - Qubit declarations (`qubit q;`)
+- `ClassicalDeclaration` - Classical variable declarations (`bit c;`)
+- `GateCall` - Gate applications (`h q;`)
+- `Measurement` - Measure statements (`measure q -> c;`)
+- `Include` - Include statements (`include "file.qasm";`)
+- Various `Expression` types for literals, identifiers, and operations
 
 ### Visitor Pattern
 
 ```go
-type Visitor interface {
-    VisitProgram(node *Program) interface{}
-    VisitGateCall(node *GateCall) interface{}
-    // ... other visit methods
+// Create custom visitor
+type MyVisitor struct {
+    parser.BaseVisitor
+    // Add custom fields
 }
 
-// Base visitor with default implementations
-type BaseVisitor struct{}
+func (v *MyVisitor) VisitGateCall(node *parser.GateCall) interface{} {
+    // Custom logic for gate calls
+    return nil
+}
 
-// Walk AST with visitor
-result := parser.Walk(visitor, node)
+// Walk AST
+visitor := &MyVisitor{}
+result := parser.Walk(visitor, program)
 
-// Depth-first traversal
+// Use depth-first visitor for automatic child traversal
 depthFirst := parser.NewDepthFirstVisitor(visitor)
 parser.Walk(depthFirst, program)
 ```
 
-## CLI Tool
-
-The package includes a command-line tool for parsing and analyzing QASM files:
-
-```bash
-# Build the CLI tool
-task build-cli
-
-# Parse QASM files
-./bin/qasmparser parse file.qasm
-
-# Validate syntax only
-./bin/qasmparser validate file.qasm
-
-# Show AST structure
-./bin/qasmparser ast --format tree file.qasm
-
-# Get program statistics
-./bin/qasmparser stats --format json file.qasm
-
-# Format QASM code (demonstration)
-./bin/qasmparser format file.qasm
-
-# Global options
-./bin/qasmparser --help
-```
-
-### CLI Usage Examples
-
-```bash
-# Parse multiple files with verbose output
-./bin/qasmparser parse -v file1.qasm file2.qasm
-
-# Show AST in JSON format
-./bin/qasmparser ast -f json --depth 3 circuit.qasm
-
-# Get statistics for all QASM files in directory
-./bin/qasmparser stats testdata/*.qasm
-
-# Validate with strict mode
-./bin/qasmparser validate --strict --max-errors 5 *.qasm
-
-# Save output to file
-./bin/qasmparser parse -o results.txt testdata/test_simple.qasm
-```
-
 ## Examples
 
-See the `examples/` directory for complete examples:
+See the `examples/` directory for complete working examples:
 
-- `parse_simple/` - Basic parsing example
-- `ast_visitor/` - AST visitor pattern usage
-- `error_handling/` - Error handling patterns
+- [`parse_simple/`](examples/parse_simple/) - Basic parsing and validation
+- [`ast_visitor/`](examples/ast_visitor/) - AST visitor pattern usage with statistics
+- [`error_handling/`](examples/error_handling/) - Comprehensive error handling patterns
 
-## Integration
+To run examples:
+
+```bash
+# Run all examples
+task examples
+
+# Run specific example
+go run examples/parse_simple/main.go
+```
+
+## Integration Examples
 
 ### With qasmfmt
+
+This parser was originally developed for [qasmfmt](https://github.com/orangekame3/qasmfmt):
 
 ```go
 import "github.com/orangekame3/qasmparser/parser"
@@ -345,15 +291,38 @@ func (f *Formatter) Format(content string) (string, error) {
 }
 ```
 
-### Future qasmlint Integration
+### Custom Analysis Tool
 
 ```go
-type Linter struct {
+type QuantumAnalyzer struct {
+    parser *parser.Parser
+}
+
+func (a *QuantumAnalyzer) Analyze(content string) (*Report, error) {
+    result := a.parser.ParseWithErrors(content)
+    
+    report := &Report{
+        Errors: result.Errors,
+    }
+    
+    if result.Program != nil {
+        visitor := &AnalysisVisitor{report: report}
+        parser.Walk(visitor, result.Program)
+    }
+    
+    return report, nil
+}
+```
+
+### Linter Integration
+
+```go
+type QASMLinter struct {
     parser *parser.Parser
     rules  []Rule
 }
 
-func (l *Linter) Lint(content string) ([]Issue, error) {
+func (l *QASMLinter) Lint(content string) ([]Issue, error) {
     program, err := l.parser.ParseString(content)
     if err != nil {
         return nil, err
@@ -361,10 +330,25 @@ func (l *Linter) Lint(content string) ([]Issue, error) {
 
     var issues []Issue
     for _, rule := range l.rules {
-        issues = append(issues, rule.Check(program)...)
+        visitor := &RuleVisitor{rule: rule}
+        parser.Walk(visitor, program)
+        issues = append(issues, visitor.Issues()...)
     }
     return issues, nil
 }
+```
+
+## Testing
+
+```bash
+# Run tests
+task test
+
+# Run tests with coverage
+task test-coverage
+
+# Run benchmarks
+task bench
 ```
 
 ## Contributing
@@ -375,7 +359,7 @@ func (l *Linter) Lint(content string) ([]Issue, error) {
 4. Run `task validate` to ensure all checks pass
 5. Submit a pull request
 
-## Development
+### Development Workflow
 
 ```bash
 # Clean and regenerate everything
@@ -384,11 +368,11 @@ task clean generate
 # Watch for grammar changes (requires fswatch)
 task dev
 
-# Copy test data from qasmfmt
-task copy-testdata
-
 # Download official grammar files
 task download-grammar
+
+# Validate package before release
+task validate
 ```
 
 ## License
