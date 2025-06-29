@@ -1,0 +1,165 @@
+version: '3'
+
+vars:
+  PACKAGE_NAME: qasmparser
+  ANTLR_VERSION: 4.13.1
+
+tasks:
+  setup:
+    desc: Setup development environment
+    cmds:
+      - go mod download
+      - task: install-antlr
+      - task: generate
+
+  install-antlr:
+    desc: Install ANTLR4 tool
+    cmds:
+      - |
+        if ! command -v antlr4 &> /dev/null; then
+          echo "Installing ANTLR4..."
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            if command -v brew &> /dev/null; then
+              brew install antlr
+            else
+              echo "Please install Homebrew first: https://brew.sh"
+              exit 1
+            fi
+          elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Linux
+            if command -v apt-get &> /dev/null; then
+              sudo apt-get update
+              sudo apt-get install -y antlr4
+            elif command -v yum &> /dev/null; then
+              sudo yum install -y antlr4
+            else
+              echo "Please install ANTLR4 manually"
+              exit 1
+            fi
+          else
+            echo "Please install ANTLR4 manually for your platform"
+            exit 1
+          fi
+        else
+          echo "ANTLR4 is already installed"
+        fi
+
+  generate:
+    desc: Generate ANTLR parser code
+    sources:
+      - grammar/*.g4
+    generates:
+      - gen/parser/*.go
+    cmds:
+      - mkdir -p gen/parser
+      - antlr -Dlanguage=Go -package parser -visitor -o gen/parser grammar/*.g4
+      - echo "Generated ANTLR parser files in gen/parser/"
+
+  build:
+    desc: Build the package
+    deps: [generate]
+    cmds:
+      - go build ./...
+
+  build-cli:
+    desc: Build CLI tool
+    deps: [generate]
+    cmds:
+      - go build -o bin/qasmparser ./cmd/qasmparser
+      - 'echo "CLI tool built: bin/qasmparser"'
+
+  test:
+    desc: Run tests
+    deps: [generate]
+    cmds:
+      - go test -v ./...
+
+  test-coverage:
+    desc: Run tests with coverage
+    deps: [generate]
+    cmds:
+      - go test -v -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - 'echo "Coverage report generated: coverage.html"'
+
+  bench:
+    desc: Run benchmarks
+    deps: [generate]
+    cmds:
+      - go test -bench=. -benchmem ./...
+
+  lint:
+    desc: Run linters
+    cmds:
+      - go fmt ./...
+      - go vet ./...
+      - |
+        if command -v golangci-lint &> /dev/null; then
+          golangci-lint run
+        else
+          echo "golangci-lint not found, skipping..."
+        fi
+
+  clean:
+    desc: Clean generated files
+    cmds:
+      - rm -rf gen/
+      - rm -f coverage.out coverage.html
+
+  examples:
+    desc: Run example programs
+    deps: [generate]
+    cmds:
+      - |
+        if [ -d "examples" ]; then
+          for example in examples/*/; do
+            if [ -f "$example/main.go" ]; then
+              echo "Running example: $example"
+              go run "$example/main.go"
+            fi
+          done
+        else
+          echo "No examples directory found"
+        fi
+
+  copy-testdata:
+    desc: Copy test data from qasmfmt
+    cmds:
+      - mkdir -p testdata
+      - cp /Users/orangekame3/src/github.com/orangekame3/qasmfmt/testdata/* testdata/ 2>/dev/null || echo "No testdata to copy"
+
+  validate:
+    desc: Validate the package
+    deps: [build, test, lint]
+    cmds:
+      - echo "Package validation complete"
+
+  release-prepare:
+    desc: Prepare for release
+    deps: [clean, generate, validate, test-coverage]
+    cmds:
+      - echo "Release preparation complete"
+
+  download-grammar:
+    desc: Download official OpenQASM grammar files
+    cmds:
+      - mkdir -p grammar
+      - curl -o grammar/qasm3Lexer.g4 https://raw.githubusercontent.com/openqasm/openqasm/refs/heads/main/source/grammar/qasm3Lexer.g4
+      - curl -o grammar/qasm3Parser.g4 https://raw.githubusercontent.com/openqasm/openqasm/refs/heads/main/source/grammar/qasm3Parser.g4
+      - echo "Downloaded official OpenQASM grammar files"
+
+  dev:
+    desc: Development mode - watch for changes and regenerate
+    deps: [generate]
+    cmds:
+      - |
+        if command -v fswatch &> /dev/null; then
+          echo "Watching for grammar changes..."
+          fswatch -o grammar/ | while read; do
+            echo "Grammar files changed, regenerating..."
+            task generate
+          done
+        else
+          echo "fswatch not found. Install it for file watching: brew install fswatch"
+        fi
