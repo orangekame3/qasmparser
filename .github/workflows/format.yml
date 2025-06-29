@@ -1,0 +1,53 @@
+name: Format Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Check EditorConfig compliance
+        uses: editorconfig-checker/action-editorconfig-checker@v2
+
+      - name: Check Go formatting
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Go files are not properly formatted:"
+            gofmt -s -l .
+            echo "Run 'gofmt -s -w .' to fix formatting issues."
+            exit 1
+          fi
+
+      - name: Check goimports formatting
+        run: |
+          go install golang.org/x/tools/cmd/goimports@latest
+          FILES=$(find . -name '*.go' ! -path './gen/*')
+          UNFORMATTED=$(echo "$FILES" | xargs goimports -l)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "Go imports are not properly formatted:"
+            echo "$UNFORMATTED"
+            echo "Run 'goimports -w .' to fix import issues."
+            exit 1
+          fi
+
+      - name: Check Go mod tidy
+        run: |
+          go mod tidy
+          if ! git diff --exit-code go.mod go.sum; then
+            echo "go.mod or go.sum files are not tidy"
+            echo "Run 'go mod tidy' to fix module issues."
+            exit 1
+          fi
