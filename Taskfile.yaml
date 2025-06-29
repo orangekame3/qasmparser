@@ -82,15 +82,45 @@ tasks:
     desc: Format Go code
     cmds:
       - go fmt ./...
+      - |
+        if command -v goimports &> /dev/null; then
+          find . -name '*.go' ! -path './gen/*' | xargs goimports -w
+        else
+          echo "goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"
+        fi
+
+  fmt:check:
+    desc: Check code formatting (CI style)
+    cmds:
+      - |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "Go files are not properly formatted:"
+          gofmt -s -l .
+          echo "Run 'task fmt' to fix formatting issues."
+          exit 1
+        fi
+      - |
+        if command -v goimports &> /dev/null; then
+          FILES=$(find . -name '*.go' ! -path './gen/*')
+          UNFORMATTED=$(echo "$FILES" | xargs goimports -l)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "Go imports are not properly formatted:"
+            echo "$UNFORMATTED"
+            echo "Run 'task fmt' to fix import issues."
+            exit 1
+          fi
+        else
+          echo "goimports not found, skipping import check"
+        fi
 
   lint:
     desc: Run linters
     deps: [fmt]
     cmds:
-      - go vet ./...
+      - go vet ./parser ./examples/...
       - |
         if command -v golangci-lint &> /dev/null; then
-          golangci-lint run
+          golangci-lint run --skip-dirs=gen
         else
           echo "golangci-lint not found, skipping..."
         fi
@@ -157,3 +187,83 @@ tasks:
         else
           echo "fswatch not found. Install it for file watching: brew install fswatch"
         fi
+
+  # CI/CD tasks
+  deps:verify:
+    desc: Verify dependencies (CI style)
+    cmds:
+      - go mod download
+      - go mod verify
+      - go mod tidy
+      - |
+        if ! git diff --exit-code go.mod go.sum; then
+          echo "go.mod or go.sum files are not tidy"
+          echo "Run 'go mod tidy' to fix module issues."
+          exit 1
+        fi
+
+  test:race:
+    desc: Run tests with race detector
+    deps: [generate]
+    cmds:
+      - go test -race -short ./...
+
+  build:all:
+    desc: Build for all platforms
+    deps: [generate]
+    cmds:
+      - echo "Building for multiple platforms..."
+      - GOOS=linux GOARCH=amd64 go build ./...
+      - GOOS=darwin GOARCH=amd64 go build ./...
+      - GOOS=darwin GOARCH=arm64 go build ./...
+      - GOOS=windows GOARCH=amd64 go build ./...
+      - echo "All platform builds successful"
+
+  security:
+    desc: Run security checks
+    cmds:
+      - |
+        if command -v gosec &> /dev/null; then
+          gosec ./...
+        else
+          echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"
+        fi
+      - |
+        if command -v govulncheck &> /dev/null; then
+          govulncheck ./...
+        else
+          echo "govulncheck not found. Install with: go install golang.org/x/vuln/cmd/govulncheck@latest"
+        fi
+
+  ci:
+    desc: Run CI pipeline locally (matches GitHub Actions)
+    cmds:
+      - echo "🚀 Running CI pipeline locally..."
+      - task: generate
+      - task: deps:verify
+      - task: fmt:check
+      - task: test
+      - task: lint
+      - task: security
+      - echo "✅ CI pipeline completed successfully!"
+
+  ci:full:
+    desc: Run full CI pipeline with all checks
+    cmds:
+      - echo "🚀 Running full CI pipeline locally..."
+      - task: generate
+      - task: deps:verify
+      - task: fmt:check
+      - task: test:race
+      - task: test-coverage
+      - task: build:all
+      - task: security
+      - echo "✅ Full CI pipeline completed successfully!"
+
+  pre-commit:
+    desc: Pre-commit checks
+    cmds:
+      - task: fmt
+      - task: lint
+      - task: test
+      - echo "✅ Pre-commit checks passed!"

@@ -260,17 +260,6 @@ func (p *Parser) extractVersion(tree antlr.ParseTree) *Version {
 	return nil
 }
 
-// extractComments extracts comments from token stream
-func (p *Parser) extractComments(stream antlr.TokenStream) []Comment {
-	if !p.options.IncludeComments {
-		return nil
-	}
-
-	comments := make([]Comment, 0)
-	// This will be implemented to extract comments from the token stream
-	return comments
-}
-
 // GetOptions returns the current parser options
 func (p *Parser) GetOptions() *ParseOptions {
 	return p.options

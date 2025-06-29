@@ -58,11 +58,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          args: --skip-dirs=gen
 
-      - name: Build CLI
-        run: task build-cli
-
-      - name: Test CLI
-        run: |
-          ./bin/qasmparser --help
-          echo "OPENQASM 3.0; qubit q; h q;" | ./bin/qasmparser parse /dev/stdin || true
+      - name: Build package
+        run: task build
