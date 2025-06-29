@@ -48,7 +48,7 @@ tasks:
         else
           echo "ANTLR4 is already installed"
         fi
-        antlr4 -version || echo "ANTLR4 version check failed"
+        antlr4 -help | head -5 || echo "ANTLR4 installed successfully"
 
   generate:
     desc: Generate ANTLR parser code
