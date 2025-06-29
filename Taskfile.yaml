@@ -43,8 +43,12 @@ tasks:
   generate:
     desc: Generate ANTLR parser code
     cmds:
+      - rm -rf gen/parser
       - mkdir -p gen/parser
-      - antlr4 -Dlanguage=Go -visitor -o gen/parser -package qasm_gen grammar/qasm3Lexer.g4 grammar/qasm3Parser.g4
+      - cp grammar/*.g4 gen/parser/
+      - cd gen/parser && antlr4 -Dlanguage=Go -package parser qasm3Lexer.g4
+      - cd gen/parser && antlr4 -Dlanguage=Go -visitor -listener -package parser qasm3Parser.g4
+      - rm gen/parser/*.g4
       - echo "Generated ANTLR parser files in gen/parser/"
 
   build:
