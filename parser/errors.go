@@ -1,0 +1,124 @@
+package parser
+
+import (
+	"fmt"
+	"strings"
+)
+
+// ParseError represents parsing errors
+type ParseError struct {
+	Message  string   `json:"message"`
+	Position Position `json:"position"`
+	Type     string   `json:"type"`    // "syntax", "semantic", "lexer"
+	Context  string   `json:"context,omitempty"`
+}
+
+func (e *ParseError) Error() string {
+	if e.Context != "" {
+		return fmt.Sprintf("%s error at line %d, column %d: %s (context: %s)",
+			e.Type, e.Position.Line, e.Position.Column, e.Message, e.Context)
+	}
+	return fmt.Sprintf("%s error at line %d, column %d: %s",
+		e.Type, e.Position.Line, e.Position.Column, e.Message)
+}
+
+// ParseResult contains parsing results with errors
+type ParseResult struct {
+	Program *Program     `json:"program,omitempty"`
+	Errors  []ParseError `json:"errors,omitempty"`
+}
+
+// HasErrors returns true if there are any errors
+func (r *ParseResult) HasErrors() bool {
+	return len(r.Errors) > 0
+}
+
+// ErrorMessages returns all error messages as strings
+func (r *ParseResult) ErrorMessages() []string {
+	messages := make([]string, len(r.Errors))
+	for i, err := range r.Errors {
+		messages[i] = err.Error()
+	}
+	return messages
+}
+
+// String returns a formatted string of all errors
+func (r *ParseResult) String() string {
+	if !r.HasErrors() {
+		return "No errors"
+	}
+	return strings.Join(r.ErrorMessages(), "\n")
+}
+
+// ErrorListener implements ANTLR error listener interface
+type ErrorListener struct {
+	errors []ParseError
+}
+
+// NewErrorListener creates a new error listener
+func NewErrorListener() *ErrorListener {
+	return &ErrorListener{
+		errors: make([]ParseError, 0),
+	}
+}
+
+// GetErrors returns collected errors
+func (l *ErrorListener) GetErrors() []ParseError {
+	return l.errors
+}
+
+// HasErrors returns true if any errors were collected
+func (l *ErrorListener) HasErrors() bool {
+	return len(l.errors) > 0
+}
+
+// SyntaxError implements antlr.ErrorListener interface
+func (l *ErrorListener) SyntaxError(recognizer interface{}, offendingSymbol interface{}, line, column int, msg string, e interface{}) {
+	l.errors = append(l.errors, ParseError{
+		Message:  msg,
+		Position: Position{Line: line, Column: column},
+		Type:     "syntax",
+	})
+}
+
+// ReportAmbiguity implements antlr.ErrorListener interface
+func (l *ErrorListener) ReportAmbiguity(recognizer interface{}, dfa interface{}, startIndex, stopIndex int, exact bool, ambigAlts interface{}, configs interface{}) {
+	// Optional: Handle ambiguity errors if needed
+}
+
+// ReportAttemptingFullContext implements antlr.ErrorListener interface
+func (l *ErrorListener) ReportAttemptingFullContext(recognizer interface{}, dfa interface{}, startIndex, stopIndex int, conflictingAlts interface{}, configs interface{}) {
+	// Optional: Handle full context attempts if needed
+}
+
+// ReportContextSensitivity implements antlr.ErrorListener interface
+func (l *ErrorListener) ReportContextSensitivity(recognizer interface{}, dfa interface{}, startIndex, stopIndex int, prediction int, configs interface{}) {
+	// Optional: Handle context sensitivity if needed
+}
+
+// NewSyntaxError creates a new syntax error
+func NewSyntaxError(message string, pos Position) ParseError {
+	return ParseError{
+		Message:  message,
+		Position: pos,
+		Type:     "syntax",
+	}
+}
+
+// NewSemanticError creates a new semantic error
+func NewSemanticError(message string, pos Position) ParseError {
+	return ParseError{
+		Message:  message,
+		Position: pos,
+		Type:     "semantic",
+	}
+}
+
+// NewLexerError creates a new lexer error
+func NewLexerError(message string, pos Position) ParseError {
+	return ParseError{
+		Message:  message,
+		Position: pos,
+		Type:     "lexer",
+	}
+}

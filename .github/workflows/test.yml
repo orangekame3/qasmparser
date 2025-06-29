@@ -1,0 +1,68 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Install ANTLR4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y antlr4
+
+      - name: Generate ANTLR files
+        run: task generate
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Check formatting
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Go files are not properly formatted:"
+            gofmt -s -l .
+            exit 1
+          fi
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+      - name: Build CLI
+        run: task build-cli
+
+      - name: Test CLI
+        run: |
+          ./bin/qasmparser --help
+          echo "OPENQASM 3.0; qubit q; h q;" | ./bin/qasmparser parse /dev/stdin || true
