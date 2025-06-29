@@ -34,8 +34,13 @@ jobs:
 
       - name: Install ANTLR4
         run: |
-          sudo apt-get update
-          sudo apt-get install -y antlr4
+          # Install specific ANTLR version to ensure consistency
+          wget https://www.antlr.org/download/antlr-4.13.2-complete.jar
+          sudo mv antlr-4.13.2-complete.jar /usr/local/lib/
+          echo '#!/bin/bash' | sudo tee /usr/local/bin/antlr4
+          echo 'java -jar /usr/local/lib/antlr-4.13.2-complete.jar "$@"' | sudo tee -a /usr/local/bin/antlr4
+          sudo chmod +x /usr/local/bin/antlr4
+          antlr4 -version
 
       - name: Generate ANTLR files
         run: task generate

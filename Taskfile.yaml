@@ -13,32 +13,42 @@ tasks:
       - task: generate
 
   install-antlr:
-    desc: Install ANTLR4 tool
+    desc: Install ANTLR4 tool (version 4.13.2)
     cmds:
       - |
         if ! command -v antlr4 &> /dev/null; then
-          echo "Installing ANTLR4..."
+          echo "Installing ANTLR4 version 4.13.2..."
           if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS
-            brew install antlr
-          elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            # Linux
-            if command -v apt-get &> /dev/null; then
-              sudo apt-get update
-              sudo apt-get install -y antlr4
-            elif command -v yum &> /dev/null; then
-              sudo yum install -y antlr4
+            # macOS - use homebrew first, fallback to manual install
+            if command -v brew &> /dev/null; then
+              brew install antlr
             else
-              echo "Please install ANTLR4 manually"
-              exit 1
+              echo "Manual ANTLR installation for macOS..."
+              curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar
+              sudo mkdir -p /usr/local/lib
+              sudo mv antlr-4.13.2-complete.jar /usr/local/lib/
+              echo '#!/bin/bash' | sudo tee /usr/local/bin/antlr4
+              echo 'java -jar /usr/local/lib/antlr-4.13.2-complete.jar "$@"' | sudo tee -a /usr/local/bin/antlr4
+              sudo chmod +x /usr/local/bin/antlr4
             fi
+          elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Linux - manual install for consistency
+            echo "Manual ANTLR installation for Linux..."
+            wget https://www.antlr.org/download/antlr-4.13.2-complete.jar
+            sudo mkdir -p /usr/local/lib
+            sudo mv antlr-4.13.2-complete.jar /usr/local/lib/
+            echo '#!/bin/bash' | sudo tee /usr/local/bin/antlr4
+            echo 'java -jar /usr/local/lib/antlr-4.13.2-complete.jar "$@"' | sudo tee -a /usr/local/bin/antlr4
+            sudo chmod +x /usr/local/bin/antlr4
           else
             echo "Please install ANTLR4 manually for your platform"
+            echo "Download: https://www.antlr.org/download/antlr-4.13.2-complete.jar"
             exit 1
           fi
         else
           echo "ANTLR4 is already installed"
         fi
+        antlr4 -version || echo "ANTLR4 version check failed"
 
   generate:
     desc: Generate ANTLR parser code
@@ -49,7 +59,27 @@ tasks:
       - cd gen/parser && antlr4 -Dlanguage=Go -package parser qasm3Lexer.g4
       - cd gen/parser && antlr4 -Dlanguage=Go -visitor -listener -package parser qasm3Parser.g4
       - rm gen/parser/*.g4
+      - task: fix-antlr-imports
       - echo "Generated ANTLR parser files in gen/parser/"
+
+  fix-antlr-imports:
+    desc: Fix ANTLR import paths for compatibility
+    internal: true
+    cmds:
+      - |
+        # Fix old ANTLR import paths to new ones
+        find gen/parser -name "*.go" -type f -exec sed -i.bak 's|github.com/antlr/antlr4/runtime/Go/antlr|github.com/antlr4-go/antlr/v4|g' {} \;
+      - |
+        # Remove backup files
+        find gen/parser -name "*.bak" -delete || true
+      - |
+        # Verify the fix worked
+        if grep -r "github.com/antlr/antlr4/runtime/Go/antlr" gen/parser/ 2>/dev/null; then
+          echo "Warning: Old ANTLR import paths still found"
+          grep -r "github.com/antlr/antlr4/runtime/Go/antlr" gen/parser/
+        else
+          echo "✓ ANTLR import paths fixed successfully"
+        fi
 
   build:
     desc: Build the package
