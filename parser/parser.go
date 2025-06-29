@@ -193,12 +193,12 @@ func (p *Parser) parseProgram(parser antlr.Parser) antlr.Tree {
 	if !programMethod.IsValid() {
 		return nil
 	}
-	
+
 	result := programMethod.Call([]reflect.Value{})
 	if len(result) == 0 {
 		return nil
 	}
-	
+
 	if tree, ok := result[0].Interface().(antlr.Tree); ok {
 		return tree
 	}
@@ -214,16 +214,16 @@ func (p *Parser) convertToAST(tree antlr.Tree, content string) *Program {
 		Statements: make([]Statement, 0),
 		Comments:   make([]Comment, 0),
 	}
-	
+
 	if tree == nil {
 		return program
 	}
-	
+
 	// Basic parsing of tree structure - would be expanded with full AST builder
 	if parseTree, ok := tree.(antlr.ParseTree); ok {
 		// Extract version if present
 		program.Version = p.extractVersion(parseTree)
-		
+
 		// Extract statements - for now just count children as a basic test
 		childCount := parseTree.GetChildCount()
 		for i := 0; i < childCount; i++ {
@@ -231,7 +231,7 @@ func (p *Parser) convertToAST(tree antlr.Tree, content string) *Program {
 			// for complete statement parsing
 		}
 	}
-	
+
 	return program
 }
 
@@ -245,7 +245,7 @@ func (p *Parser) extractVersion(tree antlr.ParseTree) *Version {
 			Number:   "3.0",
 		}
 	}
-	
+
 	// Recursively check children
 	for i := 0; i < tree.GetChildCount(); i++ {
 		if child := tree.GetChild(i); child != nil {
@@ -256,7 +256,7 @@ func (p *Parser) extractVersion(tree antlr.ParseTree) *Version {
 			}
 		}
 	}
-	
+
 	return nil
 }
 

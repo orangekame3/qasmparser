@@ -78,10 +78,15 @@ tasks:
     cmds:
       - go test -bench=. -benchmem ./...
 
-  lint:
-    desc: Run linters
+  fmt:
+    desc: Format Go code
     cmds:
       - go fmt ./...
+
+  lint:
+    desc: Run linters
+    deps: [fmt]
+    cmds:
       - go vet ./...
       - |
         if command -v golangci-lint &> /dev/null; then
